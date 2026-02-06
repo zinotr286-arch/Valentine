@@ -1,3 +1,6 @@
+const PASSWORD = "17/06/2024";
+const SESSION_KEY = "valentine_unlocked_v1";
+
 const noTexts = [
   "មិនព្រម",
   "ប្រាកដទេ អូន?",
@@ -15,13 +18,26 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+function normalizeDateLike(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+
+  const digits = raw.replace(/[^\d]/g, "");
+  if (digits.length === 8) {
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+  }
+
+  return raw
+    .replace(/\s+/g, "")
+    .replace(/[.\-]/g, "/")
+    .replace(/\/{2,}/g, "/");
+}
+
 function setYesSize(yesBtn, step) {
-  // Increase size in a way that affects layout (so it pushes the No button)
-  // and eventually dominates the screen like in the reference video.
+  // Grow the Yes button, but cap based on viewport so it behaves on phones/tablets.
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
   const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-  // Cap sizes based on viewport so it behaves well on phones/tablets.
   const maxFont = clamp(Math.floor(Math.min(vw, vh) * 0.34), 90, 280);
   const maxPadX = clamp(Math.floor(vw * 0.45), 160, 620);
   const maxPadY = clamp(Math.floor(vh * 0.30), 110, 420);
@@ -30,17 +46,13 @@ function setYesSize(yesBtn, step) {
   const padX = clamp(20 + step * 60, 20, maxPadX);
   const padY = clamp(10 + step * 38, 10, maxPadY);
 
-  // Keep it visually centered even as it grows.
   yesBtn.style.setProperty("--scale", "1");
-
   yesBtn.style.fontSize = `${fontSize}px`;
   yesBtn.style.padding = `${padY}px ${padX}px`;
-
-  // Safety: keep it within the viewport width.
   yesBtn.style.maxWidth = "96vw";
 }
 
-function main() {
+function initValentine() {
   const question = document.getElementById("question");
   const yesBtn = document.getElementById("yesBtn");
   const noBtn = document.getElementById("noBtn");
@@ -53,12 +65,20 @@ function main() {
     const btn = noBtn.getBoundingClientRect();
 
     const pad = 10;
-    const maxX = Math.max(pad, bounds.width - btn.width - pad);
-    const maxY = Math.max(pad, bounds.height - btn.height - pad);
+    const halfW = btn.width / 2;
+    const halfH = btn.height / 2;
 
-    // Keep the center area more likely so it still feels connected.
-    const x = pad + Math.random() * maxX;
-    const y = pad + Math.random() * maxY;
+    // We keep translate(-50%, -50%) in CSS, so left/top represent the button center.
+    const minX = pad + halfW;
+    const maxX = Math.max(minX, bounds.width - pad - halfW);
+    const minY = pad + halfH;
+    const maxY = Math.max(minY, bounds.height - pad - halfH);
+
+    // Slight bias towards the middle so it feels connected to the "Yes" button.
+    const rx = (Math.random() + Math.random()) / 2;
+    const ry = (Math.random() + Math.random()) / 2;
+    const x = minX + rx * (maxX - minX);
+    const y = minY + ry * (maxY - minY);
 
     noBtn.style.left = `${x}px`;
     noBtn.style.top = `${y}px`;
@@ -78,11 +98,10 @@ function main() {
     catImg.src = "assets/one.gif";
     setYesSize(yesBtn, step);
 
-    // Move "No" around every time it's clicked.
     moveNoRandomly();
   });
 
-  // Also dodge on hover/touch to make it playful.
+  // Dodge on hover/touch too.
   noBtn.addEventListener("mouseenter", () => {
     if (step > 0) moveNoRandomly();
   });
@@ -101,7 +120,6 @@ function main() {
     yesBtn.style.display = "none";
     noBtn.style.display = "none";
 
-    // Cute little heart celebration.
     document.body.classList.remove("celebrate");
     // Force reflow to restart animation.
     // eslint-disable-next-line no-unused-expressions
@@ -109,7 +127,6 @@ function main() {
     document.body.classList.add("celebrate");
     spawnHearts(22);
 
-    // Navigate to the video after the click animation starts.
     window.setTimeout(() => {
       window.location.href = YES_URL;
     }, 650);
@@ -139,4 +156,84 @@ function spawnHearts(count) {
   }
 }
 
-main();
+function unlockGate(gateEl) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, "1");
+  } catch (_) {
+    // Ignore storage failures (private mode etc).
+  }
+
+  document.body.classList.remove("gate-open");
+  document.body.classList.add("intro");
+
+  if (!gateEl) return;
+  gateEl.classList.add("gate--out");
+
+  window.setTimeout(() => {
+    gateEl.remove();
+  }, 280);
+}
+
+function setupGateThenStart() {
+  const gateEl = document.getElementById("gate");
+  if (!gateEl) {
+    document.body.classList.add("intro");
+    initValentine();
+    return;
+  }
+
+  const alreadyUnlocked = (() => {
+    try {
+      return sessionStorage.getItem(SESSION_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  if (alreadyUnlocked) {
+    gateEl.remove();
+    document.body.classList.add("intro");
+    initValentine();
+    return;
+  }
+
+  document.body.classList.add("gate-open");
+
+  const form = document.getElementById("gateForm");
+  const input = document.getElementById("gateInput");
+  const error = document.getElementById("gateError");
+  const card = gateEl.querySelector(".gateCard");
+
+  const showError = (msg) => {
+    if (error) error.textContent = msg;
+    if (card) {
+      card.classList.remove("gateShake");
+      // Force reflow to restart animation.
+      // eslint-disable-next-line no-unused-expressions
+      card.offsetHeight;
+      card.classList.add("gateShake");
+    }
+  };
+
+  if (input) {
+    // Focus after paint so mobile keyboards behave better.
+    window.setTimeout(() => input.focus(), 50);
+  }
+
+  if (!form) return;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = normalizeDateLike(input ? input.value : "");
+
+    if (val === PASSWORD) {
+      unlockGate(gateEl);
+      initValentine();
+      return;
+    }
+
+    showError("Password ខុស។ សូមព្យាយាមម្ដងទៀត។");
+    if (input) input.select();
+  });
+}
+
+setupGateThenStart();

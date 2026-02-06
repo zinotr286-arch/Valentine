@@ -3,17 +3,45 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Valentine❤️</title>
+    <title>❤️</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+      <div class="gateCard">
+        <div class="gateTop">
+          <span class="gatePill">Private</span>
+          <span class="gateHint">Happy Valentine day for my girlfriend</span>
+        </div>
+
+        <h2 id="gateTitle" class="gateTitle">បងស្រឡាញ់អូនខ្លាំងណាស់</h2>
+        <p class="gateDesc">សាត​ សុជាតិ ❤️ វុធ លីហ័រ</p>
+
+        <form id="gateForm" class="gateForm" autocomplete="off">
+          <label class="gateLabel" for="gateInput">Password Anniversiry</label>
+          <input
+            id="gateInput"
+            class="gateInput"
+            type="password"
+            inputmode="numeric"
+            placeholder="DD/MM/YYYY"
+            autocomplete="off"
+            aria-describedby="gateError"
+            required
+          />
+          <button class="btn btn-yes gateBtn" type="submit">Enter</button>
+          <p id="gateError" class="gateError" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
     <main class="app" aria-label="Valentine page">
       <section class="card" aria-label="Valentine card">
-        <h1 id="question" class="question">អូនស្រឡាញ់បងអត់😣?</h1>
+        <h1 id="question" class="question">អូនព្រមធ្វើវ៉ាឡិនថាញរបស់បងទេ?</h1>
 
         <div class="buttons" role="group" aria-label="Answer buttons">
           <div class="btnWrap">
-            <button id="yesBtn" class="btn btn-yes" type="button">ព្រម❤️</button>
+            <button id="yesBtn" class="btn btn-yes" type="button">ព្រម ❤️</button>
             <button id="noBtn" class="btn btn-no" type="button">មិនព្រម</button>
           </div>
         </div>
@@ -23,7 +51,7 @@
             id="catImg"
             class="cat"
             src="assets/one.gif"
-            alt="រូបភាពគួរឲ្យស្រលាញ់"
+            alt="រូបភាពគួរឱ្យស្រលាញ់"
             draggable="false"
           />
         </figure>
